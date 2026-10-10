@@ -94,10 +94,16 @@
         <h2>Fim de Rodada!</h2>
         <h3 id="mensagem-resultado" style="color: #f1c40f;"></h3>
         
-        <!-- Botão para jogar novamente, só aparece pro líder -->
+        <!-- Botão para jogar novamente (fim de jogo definitivo) -->
         <div id="painel-lider-reiniciar" class="escondido">
             <button onclick="reiniciarPartida()" style="background-color: #3498db; margin-top: 20px;">Jogar Outra Rodada</button>
         </div>
+
+        <!-- Botão para refazer votação (aparece só no empate) -->
+        <div id="painel-lider-revotar" class="escondido">
+            <button onclick="pedirNovaVotacao()" style="background-color: #e67e22; margin-top: 20px;">Refazer Votação</button>
+        </div>
+
         <p id="msg-aguardando-lider" style="font-size: 12px; color: #bdc3c7;">Aguardando o líder decidir...</p>
     </div>
 </div>
@@ -166,7 +172,13 @@
     // Ação do Líder: Iniciar
     function iniciarPartida() {
         let tema = document.getElementById('tema-escolhido').value;
-        fetch(`${SCRIPT_URL}?acao=iniciarPartida&codigo=${salaAtual}&tema=${tema}`);
+        fetch(`${SCRIPT_URL}?acao=iniciarPartida&codigo=${salaAtual}&tema=${tema}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.erro) {
+                    alert(data.erro); // Exibe na tela "É necessário ter pelo menos 3..."
+                }
+            });
     }
 
     // Ação do Jogador: Votar
@@ -179,9 +191,8 @@
     // O CORAÇÃO DO SITE: O Polling (Sincronização em Tempo Real)
     // =========================================================================
     function iniciarPolling() {
-        // Roda a função atualizarTela a cada 3000 milissegundos (3 segundos)
         loopAtualizacao = setInterval(atualizarTela, 3000);
-        atualizarTela(); // Roda imediatamente a primeira vez
+        atualizarTela(); 
     }
 
     function atualizarTela() {
@@ -190,7 +201,7 @@
             .then(data => {
                 if (data.erro) {
                     alert(data.erro);
-                    clearInterval(loopAtualizacao);
+                    clearInterval(loopAtualizacao); 
                     mostrarTela('tela-inicial');
                     return;
                 }
@@ -202,40 +213,52 @@
                     ulLobby.innerHTML += `<li>${j.nome}</li>`;
                 });
 
-                // LÓGICA DE TROCA DE TELAS BASEADA NO STATUS DA PLANILHA:
-                
-                // Se voltou para o Lobby (Líder reiniciou)
+                // Resetando os painéis do líder toda vez que atualiza (evita bugs visuais)
+                if (document.getElementById('painel-lider-reiniciar')) {
+                    document.getElementById('painel-lider-reiniciar').classList.add('escondido');
+                    document.getElementById('painel-lider-revotar').classList.add('escondido');
+                    document.getElementById('msg-aguardando-lider').classList.remove('escondido');
+                }
+
+                // Lógica de troca de telas
                 if (data.sala.status === "Aguardando") {
                     mostrarTela('tela-lobby');
                 }
-                
-                // Se o jogo começou
                 else if (data.sala.status === "Jogando") {
                     mostrarTela('tela-jogo');
                     desenharTelaJogo(data.jogadores);
                 } 
-                
-                // Se a votação acabou (o status vem no formato "Resultado|Mensagem")
-                else if (data.sala.status.startsWith("Resultado")) {
+                else if (data.sala.status.startsWith("Resultado") || data.sala.status.startsWith("Empate")) {
                     mostrarTela('tela-resultado');
                     
-                    // Separa o texto pelo "|" e pega a mensagem final
+                    let tipoStatus = data.sala.status.split("|")[0]; 
                     let textoFinal = data.sala.status.split("|")[1]; 
                     document.getElementById('mensagem-resultado').innerText = textoFinal;
                     
-                    // Se eu for o líder, mostro o botão de reiniciar
                     if (data.sala.lider === meuID) {
-                        document.getElementById('painel-lider-reiniciar').classList.remove('escondido');
                         document.getElementById('msg-aguardando-lider').classList.add('escondido');
+                        
+                        if (tipoStatus === "Empate") {
+                            document.getElementById('painel-lider-revotar').classList.remove('escondido');
+                        } else {
+                            document.getElementById('painel-lider-reiniciar').classList.remove('escondido');
+                        }
                     }
                 }
             });
     }
 
-    // NOVA FUNÇÃO: O líder clica para jogar de novo
+    // Ação do Líder: Jogar de novo (Limpa tudo)
     function reiniciarPartida() {
         fetch(`${SCRIPT_URL}?acao=reiniciar&codigo=${salaAtual}`);
     }
+
+    // Ação do Líder: Empatou, vamos votar de novo! (Limpa só os votos)
+    function pedirNovaVotacao() {
+        fetch(`${SCRIPT_URL}?acao=novaVotacao&codigo=${salaAtual}`);
+    }
+
+    // ABAIXO DISSO FICA A SUA FUNÇÃO desenharTelaJogo(jogadores) ...
 
     function desenharTelaJogo(jogadores) {
         let ulVotos = document.getElementById('lista-votacao');
