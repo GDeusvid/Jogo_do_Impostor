@@ -120,7 +120,7 @@
 <script>
     /**
      * =========================================================================
-     * JOGO DO IMPOSTOR - FRONTEND (COM POLLING ULTRASSEGURO DE 60s E ACELERAÇÃO NO VOTO)
+     * JOGO DO IMPOSTOR - FRONTEND (COM POLLING DE 60s E TRAVA DE ACELERAÇÃO NO VOTO)
      * =========================================================================
      */
 
@@ -131,6 +131,7 @@
     let salaAtual = "";
     let loopAtualizacao; 
     let intervaloAtual = 3000; 
+    let jaVotei = false; // 🔒 Trava para saber se este jogador já votou na rodada
 
     // Função que gerencia a troca inteligente da velocidade do relógio
     function ajustarVelocidadePolling(novoTempo) {
@@ -194,13 +195,14 @@
             });
     }
 
-    // Ação de Votar: O pulo do gato! Ao votar, o seu próprio polling acelera para 3s na hora.
+    // Ação de Votar: Ativa a trava, acelera o polling para 3s e força checagem imediata
     function votar(idAlvo) {
         fetch(`${SCRIPT_URL}?acao=votar&codigo=${salaAtual}&id=${meuID}&votoEm=${idAlvo}`)
             .then(res => res.json())
             .then(() => {
+                jaVotei = true; // 🔒 Marca que você já votou, impedindo o app de te jogar pra 60s de novo
                 alert("Voto computado!");
-                ajustarVelocidadePolling(3000); // 🚀 Acelera o polling DESTE jogador para 3 segundos!
+                ajustarVelocidadePolling(3000); // 🚀 Acelera para 3 segundos
                 atualizarTela(); // Força checagem imediata
             });
     }
@@ -208,6 +210,7 @@
     // Inicializa o Polling
     function iniciarPolling() {
         intervaloAtual = 3000;
+        jaVotei = false;
         loopAtualizacao = setInterval(atualizarTela, intervaloAtual);
         atualizarTela(); 
     }
@@ -239,17 +242,23 @@
                 // Lógica de telas e controle de tempo refinado
                 if (data.sala.status === "Aguardando") {
                     mostrarTela('tela-lobby');
-                    ajustarVelocidadePolling(3000); // No lobby: 3 segundos (rápido)
+                    jaVotei = false; // Reseta a trava ao voltar para o lobby
+                    ajustarVelocidadePolling(3000); 
                 }
                 else if (data.sala.status === "Jogando") {
                     mostrarTela('tela-jogo');
                     desenharTelaJogo(data.jogadores);
-                    // 💤 Durante o jogo: 60 segundos (1 minuto) de economia total de requisições!
-                    // Só vai acelerar antes para quem clicar em votar.
-                    ajustarVelocidadePolling(60000); 
+                    
+                    // 🧠 O Pulo do Gato: Se você já votou, mantemos em 3s. Se não votou, dorme em 60s!
+                    if (jaVotei) {
+                        ajustarVelocidadePolling(3000); 
+                    } else {
+                        ajustarVelocidadePolling(60000); // 💤 Dorme por 1 minuto poupando o Google
+                    }
                 } 
                 else if (data.sala.status.startsWith("Resultado") || data.sala.status.startsWith("Empate")) {
                     mostrarTela('tela-resultado');
+                    jaVotei = false; // Reseta a trava para a próxima rodada
                     ajustarVelocidadePolling(3000); // Nos resultados: volta para 3 segundos para o líder reiniciar
                     
                     let tipoStatus = data.sala.status.split("|")[0]; 
@@ -270,10 +279,12 @@
     }
 
     function reiniciarPartida() {
+        jaVotei = false;
         fetch(`${SCRIPT_URL}?acao=reiniciar&codigo=${salaAtual}`);
     }
 
     function pedirNovaVotacao() {
+        jaVotei = false;
         fetch(`${SCRIPT_URL}?acao=novaVotacao&codigo=${salaAtual}`);
     }
 
@@ -294,6 +305,5 @@
         });
     }
 </script>
-
 </body>
 </html>
