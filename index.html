@@ -1,318 +1,316 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jogo do Impostor</title>
-<!-- CSS simples dentro do HTML para facilitar o seu Ctrl+C / Ctrl+V -->
-<style>
-body {
-font-family: Arial, sans-serif;
-background-color: #2c3e50;
-color: white;
-text-align: center;
-padding: 20px;
-}
-.container {
-background-color: #34495e;
-padding: 20px;
-border-radius: 10px;
-max-width: 400px;
-margin: auto;
-box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-}
-input, button, select {
-width: 90%;
-padding: 10px;
-margin: 10px 0;
-border-radius: 5px;
-border: none;
-font-size: 16px;
-}
-button {
-background-color: #e74c3c;
-color: white;
-cursor: pointer;
-font-weight: bold;
-}
-button:hover { background-color: #c0392b; }
-.escondido { display: none; }
-.papel-destaque {
-font-size: 24px;
-color: #f1c40f;
-background: #2c3e50;
-padding: 10px;
-border-radius: 5px;
-}
-ul { list-style: none; padding: 0; }
-li { background: #2c3e50; margin: 5px; padding: 10px; border-radius: 5px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo do Impostor</title>
+    <!-- CSS simples dentro do HTML para facilitar o seu Ctrl+C / Ctrl+V -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            background-color: #34495e;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 400px;
+            margin: auto;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        input, button, select {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: none;
+            font-size: 16px;
+        }
+        button {
+            background-color: #e74c3c;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover { background-color: #c0392b; }
+        .escondido { display: none; }
+        .papel-destaque {
+            font-size: 24px;
+            color: #f1c40f;
+            background: #2c3e50;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        ul { list-style: none; padding: 0; }
+        li { background: #2c3e50; margin: 5px; padding: 10px; border-radius: 5px; }
+    </style>
 </head>
 <body>
 
 <div class="container">
-<h1>🕵️‍♂️ O Impostor</h1>
+    <h1>🕵️‍♂️ O Impostor</h1>
 
-<!-- TELA 1: LOGIN (Digitar nome e escolher Criar ou Entrar) -->
-<div id="tela-inicial">
-<input type="text" id="nome-jogador" placeholder="Seu Nome">
-<input type="text" id="codigo-sala" placeholder="Código (se for entrar)">
+    <!-- TELA 1: LOGIN (Digitar nome e escolher Criar ou Entrar) -->
+    <div id="tela-inicial">
+        <input type="text" id="nome-jogador" placeholder="Seu Nome">
+        <input type="text" id="codigo-sala" placeholder="Código (se for entrar)">
+        
+        <button onclick="criarSala()">Criar Nova Sala (Líder)</button>
+        <button onclick="entrarSala()" style="background-color: #3498db;">Entrar em Sala</button>
+    </div>
 
-<button onclick="criarSala()">Criar Nova Sala (Líder)</button>
-<button onclick="entrarSala()" style="background-color: #3498db;">Entrar em Sala</button>
-</div>
+    <!-- TELA 2: LOBBY (Esperando a partida começar) -->
+    <div id="tela-lobby" class="escondido">
+        <h2>Sala: <span id="lbl-codigo">---</span></h2>
+        <p>Jogadores na sala:</p>
+        <ul id="lista-jogadores-lobby"></ul>
+        
+        <!-- Esta div só vai aparecer para quem criou a sala -->
+        <div id="painel-lider" class="escondido">
+            <select id="tema-escolhido">
+                <option value="Animais">Animais</option>
+                <!-- Pode adicionar mais opções aqui conforme botar na planilha -->
+                <option value="Comidas">Comidas</option>
+                <option value="Cores">Cores</option>
+                <option value="Esportes">Esportes</option>
+                <option value="Frutas">Frutas</option>
+                <option value="Materiais">Materiais</option>
+                <option value="Objetos">Objetos</option>
+                <option value="Países">Países</option>
+                <option value="Profissões">Profissões</option>
+                <option value="Transportes">Transportes</option>
+            </select>
+            <button onclick="iniciarPartida()" style="background-color: #2ecc71;">Iniciar Jogo!</button>
+        </div>
+        <p style="font-size: 12px; color: #bdc3c7;">Aguardando início...</p>
+    </div>
 
-<!-- TELA 2: LOBBY (Esperando a partida começar) -->
-<div id="tela-lobby" class="escondido">
-<h2>Sala: <span id="lbl-codigo">---</span></h2>
-<p>Jogadores na sala:</p>
-<ul id="lista-jogadores-lobby"></ul>
+    <!-- TELA 3: O JOGO (Mostra o papel e quem votar) -->
+    <div id="tela-jogo" class="escondido">
+        <h2>Seu Papel:</h2>
+        <!-- Aqui vai aparecer a Palavra ou a palavra "IMPOSTOR" -->
+        <div class="papel-destaque" id="meu-papel">???</div>
+        
+        <p>Suspeitos para Votar:</p>
+        <ul id="lista-votacao"></ul>
+    </div>
 
-<!-- Esta div só vai aparecer para quem criou a sala -->
-<div id="painel-lider" class="escondido">
-<select id="tema-escolhido">
-<option value="Animais">Animais</option>
-<!-- Pode adicionar mais opções aqui conforme botar na planilha -->
-<option value="Comidas">Comidas</option>
-<option value="Cores">Cores</option>
-<option value="Esportes">Esportes</option>
-<option value="Frutas">Frutas</option>
-<option value="Materiais">Materiais</option>
-<option value="Objetos">Objetos</option>
-<option value="Países">Países</option>
-<option value="Profissões">Profissões</option>
-<option value="Transportes">Transportes</option>
-</select>
-<button onclick="iniciarPartida()" style="background-color: #2ecc71;">Iniciar Jogo!</button>
-</div>
-<p style="font-size: 12px; color: #bdc3c7;">Aguardando início...</p>
-</div>
+    <!-- TELA 4: RESULTADO -->
+    <div id="tela-resultado" class="escondido">
+        <h2>Fim de Rodada!</h2>
+        <h3 id="mensagem-resultado" style="color: #f1c40f;"></h3>
+        
+        <!-- Botão para jogar novamente (fim de jogo definitivo) -->
+        <div id="painel-lider-reiniciar" class="escondido">
+            <button onclick="reiniciarPartida()" style="background-color: #3498db; margin-top: 20px;">Jogar Outra Rodada</button>
+        </div>
 
-<!-- TELA 3: O JOGO (Mostra o papel e quem votar) -->
-<div id="tela-jogo" class="escondido">
-<h2>Seu Papel:</h2>
-<!-- Aqui vai aparecer a Palavra ou a palavra "IMPOSTOR" -->
-<div class="papel-destaque" id="meu-papel">???</div>
+        <!-- Botão para refazer votação (aparece só no empate) -->
+        <div id="painel-lider-revotar" class="escondido">
+            <button onclick="pedirNovaVotacao()" style="background-color: #e67e22; margin-top: 20px;">Refazer Votação</button>
+        </div>
 
-<p>Suspeitos para Votar:</p>
-<ul id="lista-votacao"></ul>
-</div>
-
-<!-- TELA 4: RESULTADO -->
-<div id="tela-resultado" class="escondido">
-<h2>Fim de Rodada!</h2>
-<h3 id="mensagem-resultado" style="color: #f1c40f;"></h3>
-
-<!-- Botão para jogar novamente (fim de jogo definitivo) -->
-<div id="painel-lider-reiniciar" class="escondido">
-<button onclick="reiniciarPartida()" style="background-color: #3498db; margin-top: 20px;">Jogar Outra Rodada</button>
-</div>
-
-<!-- Botão para refazer votação (aparece só no empate) -->
-<div id="painel-lider-revotar" class="escondido">
-<button onclick="pedirNovaVotacao()" style="background-color: #e67e22; margin-top: 20px;">Refazer Votação</button>
-</div>
-
-<p id="msg-aguardando-lider" style="font-size: 12px; color: #bdc3c7;">Aguardando o líder decidir...</p>
-</div>
+        <p id="msg-aguardando-lider" style="font-size: 12px; color: #bdc3c7;">Aguardando o líder decidir...</p>
+    </div>
 </div>
 
 <script>
-/**
-    * =========================================================================
-    * JOGO DO IMPOSTOR - FRONTEND (COM POLLING DE 60s E TRAVA DE ACELERAÇÃO NO VOTO)
-    * =========================================================================
-    */
+    /**
+     * =========================================================================
+     * JOGO DO IMPOSTOR - FRONTEND (COM POLLING DE 60s E TRAVA DE ACELERAÇÃO NO VOTO)
+     * =========================================================================
+     */
 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyB28g9F4BVkyU8q83b3HnnRGO3qrkR4qGEMwt82f-CkCg2eBVscHbvPcWLbXX6lGwj/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyB28g9F4BVkyU8q83b3HnnRGO3qrkR4qGEMwt82f-CkCg2eBVscHbvPcWLbXX6lGwj/exec";
 
-let meuID = Math.random().toString(36).substring(7);
-let meuNome = "";
-let salaAtual = "";
-let loopAtualizacao; 
-let intervaloAtual = 3000; 
-let jaVotei = false; // 🔒 Trava para saber se este jogador já votou na rodada
+    let meuID = Math.random().toString(36).substring(7);
+    let meuNome = "";
+    let salaAtual = "";
+    let loopAtualizacao; 
+    let intervaloAtual = 3000; 
+    let jaVotei = false; // 🔒 Trava para saber se este jogador já votou na rodada
 
-// Função que gerencia a troca inteligente da velocidade do relógio
-function ajustarVelocidadePolling(novoTempo) {
-if (intervaloAtual !== novoTempo) {
-intervaloAtual = novoTempo;
-clearInterval(loopAtualizacao);
-loopAtualizacao = setInterval(atualizarTela, intervaloAtual);
-}
-}
+    // Função que gerencia a troca inteligente da velocidade do relógio
+    function ajustarVelocidadePolling(novoTempo) {
+        if (intervaloAtual !== novoTempo) {
+            intervaloAtual = novoTempo;
+            clearInterval(loopAtualizacao);
+            loopAtualizacao = setInterval(atualizarTela, intervaloAtual);
+        }
+    }
 
-// Gerencia a visibilidade das telas
-function mostrarTela(telaId) {
-document.getElementById('tela-inicial').classList.add('escondido');
-document.getElementById('tela-lobby').classList.add('escondido');
-document.getElementById('tela-jogo').classList.add('escondido');
-document.getElementById('tela-resultado').classList.add('escondido'); 
+    // Gerencia a visibilidade das telas
+    function mostrarTela(telaId) {
+        document.getElementById('tela-inicial').classList.add('escondido');
+        document.getElementById('tela-lobby').classList.add('escondido');
+        document.getElementById('tela-jogo').classList.add('escondido');
+        document.getElementById('tela-resultado').classList.add('escondido'); 
+        
+        document.getElementById(telaId).classList.remove('escondido');
+    }
 
-document.getElementById(telaId).classList.remove('escondido');
-}
-
-// Criar Sala
+    // Criar Sala
     // Ação do Botão: Criar Sala
-function criarSala() {
-meuNome = document.getElementById('nome-jogador').value;
-if (!meuNome) return alert("Digite seu nome!");
+    function criarSala() {
+        meuNome = document.getElementById('nome-jogador').value;
+        if (!meuNome) return alert("Digite seu nome!");
 
-fetch(`${SCRIPT_URL}?acao=criarSala&nome=${meuNome}&id=${meuID}`)
-.then(res => res.json())
-.then(data => {
+        fetch(`${SCRIPT_URL}?acao=criarSala&nome=${meuNome}&id=${meuID}`)
+            .then(res => res.json())
+            .then(data => {
                 // 🛑 Se o servidor retornou erro (ex: limite de 3 salas atingido)
                 if (data.erro) {
                     alert(data.erro);
                     return; // Interrompe a execução para não mudar de tela
                 }
 
-salaAtual = data.codigo;
-document.getElementById('lbl-codigo').innerText = salaAtual;
-                document.getElementById('painel-lider').classList.remove('escondido');
+                salaAtual = data.codigo;
+                document.getElementById('lbl-codigo').innerText = salaAtual;
                 document.getElementById('painel-lider').classList.remove('escondido'); // Sou líder
-mostrarTela('tela-lobby');
-                iniciarPolling();
+                mostrarTela('tela-lobby');
                 iniciarPolling(); // Começa a checar a sala
-});
-}
+            });
+    }
 
-// Entrar em Sala
-function entrarSala() {
-meuNome = document.getElementById('nome-jogador').value;
-salaAtual = document.getElementById('codigo-sala').value;
-if (!meuNome || !salaAtual) return alert("Digite nome e código!");
+    // Entrar em Sala
+    function entrarSala() {
+        meuNome = document.getElementById('nome-jogador').value;
+        salaAtual = document.getElementById('codigo-sala').value;
+        if (!meuNome || !salaAtual) return alert("Digite nome e código!");
 
-fetch(`${SCRIPT_URL}?acao=entrarSala&nome=${meuNome}&codigo=${salaAtual}&id=${meuID}`)
-.then(res => res.json())
-.then(data => {
-document.getElementById('lbl-codigo').innerText = salaAtual;
-mostrarTela('tela-lobby');
-iniciarPolling();
-});
-}
+        fetch(`${SCRIPT_URL}?acao=entrarSala&nome=${meuNome}&codigo=${salaAtual}&id=${meuID}`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('lbl-codigo').innerText = salaAtual;
+                mostrarTela('tela-lobby');
+                iniciarPolling();
+            });
+    }
 
-// Iniciar Partida (Líder)
-function iniciarPartida() {
-let tema = document.getElementById('tema-escolhido').value;
-fetch(`${SCRIPT_URL}?acao=iniciarPartida&codigo=${salaAtual}&tema=${tema}`)
-.then(res => res.json())
-.then(data => {
-if (data.erro) {
-alert(data.erro);
-}
-});
-}
+    // Iniciar Partida (Líder)
+    function iniciarPartida() {
+        let tema = document.getElementById('tema-escolhido').value;
+        fetch(`${SCRIPT_URL}?acao=iniciarPartida&codigo=${salaAtual}&tema=${tema}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.erro) {
+                    alert(data.erro);
+                }
+            });
+    }
 
-// Ação de Votar: Ativa a trava, acelera o polling para 3s e força checagem imediata
-function votar(idAlvo) {
-fetch(`${SCRIPT_URL}?acao=votar&codigo=${salaAtual}&id=${meuID}&votoEm=${idAlvo}`)
-.then(res => res.json())
-.then(() => {
-jaVotei = true; // 🔒 Marca que você já votou, impedindo o app de te jogar pra 60s de novo
-alert("Voto computado!");
-ajustarVelocidadePolling(3000); // 🚀 Acelera para 3 segundos
-atualizarTela(); // Força checagem imediata
-});
-}
+    // Ação de Votar: Ativa a trava, acelera o polling para 3s e força checagem imediata
+    function votar(idAlvo) {
+        fetch(`${SCRIPT_URL}?acao=votar&codigo=${salaAtual}&id=${meuID}&votoEm=${idAlvo}`)
+            .then(res => res.json())
+            .then(() => {
+                jaVotei = true; // 🔒 Marca que você já votou, impedindo o app de te jogar pra 60s de novo
+                alert("Voto computado!");
+                ajustarVelocidadePolling(3000); // 🚀 Acelera para 3 segundos
+                atualizarTela(); // Força checagem imediata
+            });
+    }
 
-// Inicializa o Polling
-function iniciarPolling() {
-intervaloAtual = 3000;
-jaVotei = false;
-loopAtualizacao = setInterval(atualizarTela, intervaloAtual);
-atualizarTela(); 
-}
+    // Inicializa o Polling
+    function iniciarPolling() {
+        intervaloAtual = 3000;
+        jaVotei = false;
+        loopAtualizacao = setInterval(atualizarTela, intervaloAtual);
+        atualizarTela(); 
+    }
 
-// Atualização da Tela (Sincronização)
-function atualizarTela() {
-fetch(`${SCRIPT_URL}?acao=estadoSala&codigo=${salaAtual}`)
-.then(res => res.json())
-.then(data => {
-if (data.erro) {
-alert(data.erro);
-clearInterval(loopAtualizacao); 
-mostrarTela('tela-inicial');
-return;
-}
+    // Atualização da Tela (Sincronização)
+    function atualizarTela() {
+        fetch(`${SCRIPT_URL}?acao=estadoSala&codigo=${salaAtual}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.erro) {
+                    alert(data.erro);
+                    clearInterval(loopAtualizacao); 
+                    mostrarTela('tela-inicial');
+                    return;
+                }
 
-let ulLobby = document.getElementById('lista-jogadores-lobby');
-ulLobby.innerHTML = ""; 
-data.jogadores.forEach(j => {
-ulLobby.innerHTML += `<li>${j.nome}</li>`;
-});
+                let ulLobby = document.getElementById('lista-jogadores-lobby');
+                ulLobby.innerHTML = ""; 
+                data.jogadores.forEach(j => {
+                    ulLobby.innerHTML += `<li>${j.nome}</li>`;
+                });
 
-if (document.getElementById('painel-lider-reiniciar')) {
-document.getElementById('painel-lider-reiniciar').classList.add('escondido');
-document.getElementById('painel-lider-revotar').classList.add('escondido');
-document.getElementById('msg-aguardando-lider').classList.remove('escondido');
-}
+                if (document.getElementById('painel-lider-reiniciar')) {
+                    document.getElementById('painel-lider-reiniciar').classList.add('escondido');
+                    document.getElementById('painel-lider-revotar').classList.add('escondido');
+                    document.getElementById('msg-aguardando-lider').classList.remove('escondido');
+                }
 
-// Lógica de telas e controle de tempo refinado
-if (data.sala.status === "Aguardando") {
-mostrarTela('tela-lobby');
-jaVotei = false; // Reseta a trava ao voltar para o lobby
-ajustarVelocidadePolling(3000); 
-}
-else if (data.sala.status === "Jogando") {
-mostrarTela('tela-jogo');
-desenharTelaJogo(data.jogadores);
+                // Lógica de telas e controle de tempo refinado
+                if (data.sala.status === "Aguardando") {
+                    mostrarTela('tela-lobby');
+                    jaVotei = false; // Reseta a trava ao voltar para o lobby
+                    ajustarVelocidadePolling(3000); 
+                }
+                else if (data.sala.status === "Jogando") {
+                    mostrarTela('tela-jogo');
+                    desenharTelaJogo(data.jogadores);
+                    
+                    // 🧠 O Pulo do Gato: Se você já votou, mantemos em 3s. Se não votou, dorme em 60s!
+                    if (jaVotei) {
+                        ajustarVelocidadePolling(3000); 
+                    } else {
+                        ajustarVelocidadePolling(60000); // 💤 Dorme por 1 minuto poupando o Google
+                    }
+                } 
+                else if (data.sala.status.startsWith("Resultado") || data.sala.status.startsWith("Empate")) {
+                    mostrarTela('tela-resultado');
+                    jaVotei = false; // Reseta a trava para a próxima rodada
+                    ajustarVelocidadePolling(3000); // Nos resultados: volta para 3 segundos para o líder reiniciar
+                    
+                    let tipoStatus = data.sala.status.split("|")[0]; 
+                    let textoFinal = data.sala.status.split("|")[1]; 
+                    document.getElementById('mensagem-resultado').innerText = textoFinal;
+                    
+                    if (data.sala.lider === meuID) {
+                        document.getElementById('msg-aguardando-lider').classList.add('escondido');
+                        
+                        if (tipoStatus === "Empate") {
+                            document.getElementById('painel-lider-revotar').classList.remove('escondido');
+                        } else {
+                            document.getElementById('painel-lider-reiniciar').classList.remove('escondido');
+                        }
+                    }
+                }
+            });
+    }
 
-// 🧠 O Pulo do Gato: Se você já votou, mantemos em 3s. Se não votou, dorme em 60s!
-if (jaVotei) {
-ajustarVelocidadePolling(3000); 
-} else {
-ajustarVelocidadePolling(60000); // 💤 Dorme por 1 minuto poupando o Google
-}
-} 
-else if (data.sala.status.startsWith("Resultado") || data.sala.status.startsWith("Empate")) {
-mostrarTela('tela-resultado');
-jaVotei = false; // Reseta a trava para a próxima rodada
-ajustarVelocidadePolling(3000); // Nos resultados: volta para 3 segundos para o líder reiniciar
+    function reiniciarPartida() {
+        jaVotei = false;
+        fetch(`${SCRIPT_URL}?acao=reiniciar&codigo=${salaAtual}`);
+    }
 
-let tipoStatus = data.sala.status.split("|")[0]; 
-let textoFinal = data.sala.status.split("|")[1]; 
-document.getElementById('mensagem-resultado').innerText = textoFinal;
+    function pedirNovaVotacao() {
+        jaVotei = false;
+        fetch(`${SCRIPT_URL}?acao=novaVotacao&codigo=${salaAtual}`);
+    }
 
-if (data.sala.lider === meuID) {
-document.getElementById('msg-aguardando-lider').classList.add('escondido');
+    function desenharTelaJogo(jogadores) {
+        let ulVotos = document.getElementById('lista-votacao');
+        ulVotos.innerHTML = "";
 
-if (tipoStatus === "Empate") {
-document.getElementById('painel-lider-revotar').classList.remove('escondido');
-} else {
-document.getElementById('painel-lider-reiniciar').classList.remove('escondido');
-}
-}
-}
-});
-}
-
-function reiniciarPartida() {
-jaVotei = false;
-fetch(`${SCRIPT_URL}?acao=reiniciar&codigo=${salaAtual}`);
-}
-
-function pedirNovaVotacao() {
-jaVotei = false;
-fetch(`${SCRIPT_URL}?acao=novaVotacao&codigo=${salaAtual}`);
-}
-
-function desenharTelaJogo(jogadores) {
-let ulVotos = document.getElementById('lista-votacao');
-ulVotos.innerHTML = "";
-
-jogadores.forEach(j => {
-if (j.id === meuID) {
-document.getElementById('meu-papel').innerText = j.papel;
-} else {
-ulVotos.innerHTML += `
-                   <li>
-                       ${j.nome} 
-                       <button onclick="votar('${j.id}')" style="width: auto; padding: 5px; float: right;">Votar</button>
-                   </li>`;
-}
-});
-}
+        jogadores.forEach(j => {
+            if (j.id === meuID) {
+                document.getElementById('meu-papel').innerText = j.papel;
+            } else {
+                ulVotos.innerHTML += `
+                    <li>
+                        ${j.nome} 
+                        <button onclick="votar('${j.id}')" style="width: auto; padding: 5px; float: right;">Votar</button>
+                    </li>`;
+            }
+        });
+    }
 </script>
 </body>
 </html>
