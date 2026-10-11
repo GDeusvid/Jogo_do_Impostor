@@ -153,6 +153,7 @@
     }
 
     // Criar Sala
+    // Ação do Botão: Criar Sala
     function criarSala() {
         meuNome = document.getElementById('nome-jogador').value;
         if (!meuNome) return alert("Digite seu nome!");
@@ -160,11 +161,17 @@
         fetch(`${SCRIPT_URL}?acao=criarSala&nome=${meuNome}&id=${meuID}`)
             .then(res => res.json())
             .then(data => {
+                // 🛑 Se o servidor retornou erro (ex: limite de 3 salas atingido)
+                if (data.erro) {
+                    alert(data.erro);
+                    return; // Interrompe a execução para não mudar de tela
+                }
+
                 salaAtual = data.codigo;
                 document.getElementById('lbl-codigo').innerText = salaAtual;
-                document.getElementById('painel-lider').classList.remove('escondido');
+                document.getElementById('painel-lider').classList.remove('escondido'); // Sou líder
                 mostrarTela('tela-lobby');
-                iniciarPolling();
+                iniciarPolling(); // Começa a checar a sala
             });
     }
 
