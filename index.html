@@ -46,6 +46,28 @@
         }
         ul { list-style: none; padding: 0; }
         li { background: #2c3e50; margin: 5px; padding: 10px; border-radius: 5px; }
+
+        /* Estilo da bolinha de carregando */
+    .spinner {
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #ffffff; /* Cor da bolinha (pode mudar para combinar com seu site) */
+        animation: girar 0.8s linear infinite;
+        display: inline-block;
+        vertical-align: middle;
+        margin-left: 8px;
+    }
+
+    @keyframes girar {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .escondido {
+        display: none !important;
+    }
     </style>
 </head>
 <body>
@@ -86,6 +108,9 @@
             <button onclick="iniciarPartida()" style="background-color: #2ecc71;">Iniciar Jogo!</button>
         </div>
         <p style="font-size: 12px; color: #bdc3c7;">Aguardando início...</p>
+        <div id="msg-aguardando-lider">
+    Aguardando o líder iniciar a partida<span id="loader-inicio" class="spinner escondido"></span>
+</div>
     </div>
 
     <!-- TELA 3: O JOGO (Mostra o papel e quem votar) -->
@@ -96,6 +121,10 @@
         
         <p>Suspeitos para Votar:</p>
         <ul id="lista-votacao"></ul>
+        <div id="msg-esperando-votos" class="escondido" style="text-align: center; margin-top: 20px;">
+        <h3>Voto computado! Aguardando os outros jogadores votarem...</h3>
+        <div class="spinner" style="border-top-color: #007bff; width: 30px; height: 30px; border-width: 4px;"></div>
+        </div>
     </div>
 
     <!-- TELA 4: RESULTADO -->
@@ -192,26 +221,36 @@
 
     // Iniciar Partida (Líder)
     function iniciarPartida() {
-        let tema = document.getElementById('tema-escolhido').value;
-        fetch(`${SCRIPT_URL}?acao=iniciarPartida&codigo=${salaAtual}&tema=${tema}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.erro) {
-                    alert(data.erro);
-                }
-            });
+    let tema = document.getElementById('tema-escolhido').value;
+    
+    // 🌀 Mostra a bolinha rodando no botão ou na mensagem de espera
+    document.getElementById('loader-inicio').classList.remove('escondido');
+
+    fetch(`${SCRIPT_URL}?acao=iniciarPartida&codigo=${salaAtual}&tema=${tema}`)
+        .then(res => res.json())
+        .then(data => {
+            // Esconde a bolinha se der erro (se iniciar com sucesso, a tela muda sozinha pelo polling)
+            if (data.erro) {
+                document.getElementById('loader-inicio').classList.add('escondido');
+                alert(data.erro);
+            }
+        });
     }
 
     // Ação de Votar: Ativa a trava, acelera o polling para 3s e força checagem imediata
     function votar(idAlvo) {
-        fetch(`${SCRIPT_URL}?acao=votar&codigo=${salaAtual}&id=${meuID}&votoEm=${idAlvo}`)
-            .then(res => res.json())
-            .then(() => {
-                jaVotei = true; // 🔒 Marca que você já votou, impedindo o app de te jogar pra 60s de novo
-                alert("Voto computado!");
-                ajustarVelocidadePolling(3000); // 🚀 Acelera para 3 segundos
-                atualizarTela(); // Força checagem imediata
-            });
+    fetch(`${SCRIPT_URL}?acao=votar&codigo=${salaAtual}&id=${meuID}&votoEm=${idAlvo}`)
+        .then(res => res.json())
+        .then(() => {
+            jaVotei = true; // Trava o polling em 3s
+            ajustarVelocidadePolling(3000); 
+
+            // 🎨 Efeito visual: Esconde a lista de votos e mostra o aviso de "Aguardando os outros"
+            document.getElementById('lista-votacao').classList.add('escondido');
+            document.getElementById('msg-esperando-votos').classList.remove('escondido');
+
+            atualizarTela(); // Força checagem imediata
+        });
     }
 
     // Inicializa o Polling
@@ -286,8 +325,9 @@
     }
 
     function reiniciarPartida() {
-        jaVotei = false;
-        fetch(`${SCRIPT_URL}?acao=reiniciar&codigo=${salaAtual}`);
+    jaVotei = false;
+    // Opcional: mostrar um spinner no botão do líder se quiser
+    fetch(`${SCRIPT_URL}?acao=reiniciar&codigo=${salaAtual}`);
     }
 
     function pedirNovaVotacao() {
