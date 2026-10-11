@@ -120,21 +120,19 @@
 <script>
     /**
      * =========================================================================
-     * JOGO DO IMPOSTOR - FRONTEND (JAVASCRIPT COMPLETO E OTIMIZADO)
+     * JOGO DO IMPOSTOR - FRONTEND (COM POLLING ULTRASSEGURO DE 60s E ACELERAÇÃO NO VOTO)
      * =========================================================================
      */
 
-    // A sua URL exata do Web App:
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyB28g9F4BVkyU8q83b3HnnRGO3qrkR4qGEMwt82f-CkCg2eBVscHbvPcWLbXX6lGwj/exec";
 
-    // Variáveis globais para guardar o estado do usuário na página
-    let meuID = Math.random().toString(36).substring(7); // Gera um ID aleatório para a sessão
+    let meuID = Math.random().toString(36).substring(7);
     let meuNome = "";
     let salaAtual = "";
-    let loopAtualizacao; // Para controlar o intervalo que checa a planilha
-    let intervaloAtual = 3000; // Guarda a velocidade atual do relógio (polling)
+    let loopAtualizacao; 
+    let intervaloAtual = 3000; 
 
-    // Função inteligente que muda dinamicamente a velocidade do polling sem duplicar relógios
+    // Função que gerencia a troca inteligente da velocidade do relógio
     function ajustarVelocidadePolling(novoTempo) {
         if (intervaloAtual !== novoTempo) {
             intervaloAtual = novoTempo;
@@ -143,7 +141,7 @@
         }
     }
 
-    // Muda a visibilidade das "telas" (divs) escondendo as outras e mostrando a desejada
+    // Gerencia a visibilidade das telas
     function mostrarTela(telaId) {
         document.getElementById('tela-inicial').classList.add('escondido');
         document.getElementById('tela-lobby').classList.add('escondido');
@@ -153,7 +151,7 @@
         document.getElementById(telaId).classList.remove('escondido');
     }
 
-    // Ação do Botão: Criar Sala
+    // Criar Sala
     function criarSala() {
         meuNome = document.getElementById('nome-jogador').value;
         if (!meuNome) return alert("Digite seu nome!");
@@ -163,13 +161,13 @@
             .then(data => {
                 salaAtual = data.codigo;
                 document.getElementById('lbl-codigo').innerText = salaAtual;
-                document.getElementById('painel-lider').classList.remove('escondido'); // Sou líder
+                document.getElementById('painel-lider').classList.remove('escondido');
                 mostrarTela('tela-lobby');
                 iniciarPolling();
             });
     }
 
-    // Ação do Botão: Entrar na Sala
+    // Entrar em Sala
     function entrarSala() {
         meuNome = document.getElementById('nome-jogador').value;
         salaAtual = document.getElementById('codigo-sala').value;
@@ -184,37 +182,37 @@
             });
     }
 
-    // Ação do Líder: Iniciar
+    // Iniciar Partida (Líder)
     function iniciarPartida() {
         let tema = document.getElementById('tema-escolhido').value;
         fetch(`${SCRIPT_URL}?acao=iniciarPartida&codigo=${salaAtual}&tema=${tema}`)
             .then(res => res.json())
             .then(data => {
                 if (data.erro) {
-                    alert(data.erro); // Exibe na tela "É necessário ter pelo menos 3..."
+                    alert(data.erro);
                 }
             });
     }
 
-    // Ação do Jogador: Votar (Com checagem imediata para não esperar os 15s)
+    // Ação de Votar: O pulo do gato! Ao votar, o seu próprio polling acelera para 3s na hora.
     function votar(idAlvo) {
         fetch(`${SCRIPT_URL}?acao=votar&codigo=${salaAtual}&id=${meuID}&votoEm=${idAlvo}`)
             .then(res => res.json())
             .then(() => {
                 alert("Voto computado!");
-                atualizarTela(); // Força a tela a atualizar na hora caso seja o último voto
+                ajustarVelocidadePolling(3000); // 🚀 Acelera o polling DESTE jogador para 3 segundos!
+                atualizarTela(); // Força checagem imediata
             });
     }
 
-    // =========================================================================
-    // O CORAÇÃO DO SITE: O Polling (Sincronização em Tempo Real Inteligente)
-    // =========================================================================
+    // Inicializa o Polling
     function iniciarPolling() {
         intervaloAtual = 3000;
         loopAtualizacao = setInterval(atualizarTela, intervaloAtual);
         atualizarTela(); 
     }
 
+    // Atualização da Tela (Sincronização)
     function atualizarTela() {
         fetch(`${SCRIPT_URL}?acao=estadoSala&codigo=${salaAtual}`)
             .then(res => res.json())
@@ -226,33 +224,33 @@
                     return;
                 }
 
-                // Desenha a lista de jogadores no Lobby
                 let ulLobby = document.getElementById('lista-jogadores-lobby');
                 ulLobby.innerHTML = ""; 
                 data.jogadores.forEach(j => {
                     ulLobby.innerHTML += `<li>${j.nome}</li>`;
                 });
 
-                // Resetando os painéis do líder toda vez que atualiza (evita bugs visuais)
                 if (document.getElementById('painel-lider-reiniciar')) {
                     document.getElementById('painel-lider-reiniciar').classList.add('escondido');
                     document.getElementById('painel-lider-revotar').classList.add('escondido');
                     document.getElementById('msg-aguardando-lider').classList.remove('escondido');
                 }
 
-                // Lógica de troca de telas e ajuste de velocidade do polling
+                // Lógica de telas e controle de tempo refinado
                 if (data.sala.status === "Aguardando") {
                     mostrarTela('tela-lobby');
-                    ajustarVelocidadePolling(3000); // No lobby: checa a cada 3 segundos (rápido)
+                    ajustarVelocidadePolling(3000); // No lobby: 3 segundos (rápido)
                 }
                 else if (data.sala.status === "Jogando") {
                     mostrarTela('tela-jogo');
                     desenharTelaJogo(data.jogadores);
-                    ajustarVelocidadePolling(15000); // Durante o jogo/discussão: desacelera para 15 segundos (economia máxima!)
+                    // 💤 Durante o jogo: 60 segundos (1 minuto) de economia total de requisições!
+                    // Só vai acelerar antes para quem clicar em votar.
+                    ajustarVelocidadePolling(60000); 
                 } 
                 else if (data.sala.status.startsWith("Resultado") || data.sala.status.startsWith("Empate")) {
                     mostrarTela('tela-resultado');
-                    ajustarVelocidadePolling(3000); // Na tela de resultado: volta a ser 3 segundos para o líder reiniciar rápido
+                    ajustarVelocidadePolling(3000); // Nos resultados: volta para 3 segundos para o líder reiniciar
                     
                     let tipoStatus = data.sala.status.split("|")[0]; 
                     let textoFinal = data.sala.status.split("|")[1]; 
@@ -271,28 +269,22 @@
             });
     }
 
-    // Ação do Líder: Jogar de novo (Limpa tudo)
     function reiniciarPartida() {
         fetch(`${SCRIPT_URL}?acao=reiniciar&codigo=${salaAtual}`);
     }
 
-    // Ação do Líder: Empatou, vamos votar de novo! (Limpa só os votos)
     function pedirNovaVotacao() {
         fetch(`${SCRIPT_URL}?acao=novaVotacao&codigo=${salaAtual}`);
     }
 
-    // Desenha a tela de jogo e os botões de votação
     function desenharTelaJogo(jogadores) {
         let ulVotos = document.getElementById('lista-votacao');
         ulVotos.innerHTML = "";
 
         jogadores.forEach(j => {
-            // Descobre o seu próprio papel
             if (j.id === meuID) {
                 document.getElementById('meu-papel').innerText = j.papel;
-            } 
-            // Cria botões para votar nos OUTROS jogadores
-            else {
+            } else {
                 ulVotos.innerHTML += `
                     <li>
                         ${j.nome} 
