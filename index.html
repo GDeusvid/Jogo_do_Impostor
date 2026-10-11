@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jogo do Impostor</title>
-    <!-- CSS simples dentro do HTML para facilitar o seu Ctrl+C / Ctrl+V -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -36,7 +35,7 @@
             font-weight: bold;
         }
         button:hover { background-color: #c0392b; }
-        .escondido { display: none; }
+        .escondido { display: none !important; }
         .papel-destaque {
             font-size: 24px;
             color: #f1c40f;
@@ -48,26 +47,22 @@
         li { background: #2c3e50; margin: 5px; padding: 10px; border-radius: 5px; }
 
         /* Estilo da bolinha de carregando */
-    .spinner {
-        width: 20px;
-        height: 20px;
-        border: 3px solid rgba(255, 255, 255, 0.3);
-        border-radius: 50%;
-        border-top-color: #ffffff; /* Cor da bolinha (pode mudar para combinar com seu site) */
-        animation: girar 0.8s linear infinite;
-        display: inline-block;
-        vertical-align: middle;
-        margin-left: 8px;
-    }
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #ffffff;
+            animation: girar 0.8s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 8px;
+        }
 
-    @keyframes girar {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    .escondido {
-        display: none !important;
-    }
+        @keyframes girar {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -75,7 +70,7 @@
 <div class="container">
     <h1>🕵️‍♂️ O Impostor</h1>
 
-    <!-- TELA 1: LOGIN (Digitar nome e escolher Criar ou Entrar) -->
+    <!-- TELA 1: LOGIN -->
     <div id="tela-inicial">
         <input type="text" id="nome-jogador" placeholder="Seu Nome">
         <input type="text" id="codigo-sala" placeholder="Código (se for entrar)">
@@ -84,17 +79,15 @@
         <button onclick="entrarSala()" style="background-color: #3498db;">Entrar em Sala</button>
     </div>
 
-    <!-- TELA 2: LOBBY (Esperando a partida começar) -->
+    <!-- TELA 2: LOBBY -->
     <div id="tela-lobby" class="escondido">
         <h2>Sala: <span id="lbl-codigo">---</span></h2>
         <p>Jogadores na sala:</p>
         <ul id="lista-jogadores-lobby"></ul>
         
-        <!-- Esta div só vai aparecer para quem criou a sala -->
         <div id="painel-lider" class="escondido">
             <select id="tema-escolhido">
                 <option value="Animais">Animais</option>
-                <!-- Pode adicionar mais opções aqui conforme botar na planilha -->
                 <option value="Comidas">Comidas</option>
                 <option value="Cores">Cores</option>
                 <option value="Esportes">Esportes</option>
@@ -107,23 +100,23 @@
             </select>
             <button onclick="iniciarPartida()" style="background-color: #2ecc71;">Iniciar Jogo!</button>
         </div>
-        <p style="font-size: 12px; color: #bdc3c7;">Aguardando início...</p>
+        
         <div id="msg-aguardando-lider">
-    Aguardando o líder iniciar a partida<span id="loader-inicio" class="spinner escondido"></span>
-</div>
+            Aguardando o líder iniciar a partida<span id="loader-inicio" class="spinner escondido"></span>
+        </div>
     </div>
 
-    <!-- TELA 3: O JOGO (Mostra o papel e quem votar) -->
+    <!-- TELA 3: O JOGO -->
     <div id="tela-jogo" class="escondido">
         <h2>Seu Papel:</h2>
-        <!-- Aqui vai aparecer a Palavra ou a palavra "IMPOSTOR" -->
         <div class="papel-destaque" id="meu-papel">???</div>
         
         <p>Suspeitos para Votar:</p>
         <ul id="lista-votacao"></ul>
+        
         <div id="msg-esperando-votos" class="escondido" style="text-align: center; margin-top: 20px;">
-        <h3>Voto computado! Aguardando os outros jogadores votarem...</h3>
-        <div class="spinner" style="border-top-color: #007bff; width: 30px; height: 30px; border-width: 4px;"></div>
+            <h3>Voto computado! Aguardando os outros jogadores votarem...</h3>
+            <div class="spinner" style="border-top-color: #007bff; width: 30px; height: 30px; border-width: 4px;"></div>
         </div>
     </div>
 
@@ -132,27 +125,19 @@
         <h2>Fim de Rodada!</h2>
         <h3 id="mensagem-resultado" style="color: #f1c40f;"></h3>
         
-        <!-- Botão para jogar novamente (fim de jogo definitivo) -->
         <div id="painel-lider-reiniciar" class="escondido">
             <button onclick="reiniciarPartida()" style="background-color: #3498db; margin-top: 20px;">Jogar Outra Rodada</button>
         </div>
 
-        <!-- Botão para refazer votação (aparece só no empate) -->
         <div id="painel-lider-revotar" class="escondido">
             <button onclick="pedirNovaVotacao()" style="background-color: #e67e22; margin-top: 20px;">Refazer Votação</button>
         </div>
 
-        <p id="msg-aguardando-lider" style="font-size: 12px; color: #bdc3c7;">Aguardando o líder decidir...</p>
+        <p id="msg-aguardando-resultado" style="font-size: 12px; color: #bdc3c7;">Aguardando o líder decidir...</p>
     </div>
 </div>
 
 <script>
-    /**
-     * =========================================================================
-     * JOGO DO IMPOSTOR - FRONTEND (COM POLLING DE 60s E TRAVA DE ACELERAÇÃO NO VOTO)
-     * =========================================================================
-     */
-
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyB28g9F4BVkyU8q83b3HnnRGO3qrkR4qGEMwt82f-CkCg2eBVscHbvPcWLbXX6lGwj/exec";
 
     let meuID = Math.random().toString(36).substring(7);
@@ -160,9 +145,8 @@
     let salaAtual = "";
     let loopAtualizacao; 
     let intervaloAtual = 3000; 
-    let jaVotei = false; // 🔒 Trava para saber se este jogador já votou na rodada
+    let jaVotei = false; 
 
-    // Função que gerencia a troca inteligente da velocidade do relógio
     function ajustarVelocidadePolling(novoTempo) {
         if (intervaloAtual !== novoTempo) {
             intervaloAtual = novoTempo;
@@ -171,7 +155,6 @@
         }
     }
 
-    // Gerencia a visibilidade das telas
     function mostrarTela(telaId) {
         document.getElementById('tela-inicial').classList.add('escondido');
         document.getElementById('tela-lobby').classList.add('escondido');
@@ -181,8 +164,6 @@
         document.getElementById(telaId).classList.remove('escondido');
     }
 
-    // Criar Sala
-    // Ação do Botão: Criar Sala
     function criarSala() {
         meuNome = document.getElementById('nome-jogador').value;
         if (!meuNome) return alert("Digite seu nome!");
@@ -190,21 +171,19 @@
         fetch(`${SCRIPT_URL}?acao=criarSala&nome=${meuNome}&id=${meuID}`)
             .then(res => res.json())
             .then(data => {
-                // 🛑 Se o servidor retornou erro (ex: limite de 3 salas atingido)
                 if (data.erro) {
                     alert(data.erro);
-                    return; // Interrompe a execução para não mudar de tela
+                    return;
                 }
 
                 salaAtual = data.codigo;
                 document.getElementById('lbl-codigo').innerText = salaAtual;
-                document.getElementById('painel-lider').classList.remove('escondido'); // Sou líder
+                document.getElementById('painel-lider').classList.remove('escondido');
                 mostrarTela('tela-lobby');
-                iniciarPolling(); // Começa a checar a sala
+                iniciarPolling();
             });
     }
 
-    // Entrar em Sala
     function entrarSala() {
         meuNome = document.getElementById('nome-jogador').value;
         salaAtual = document.getElementById('codigo-sala').value;
@@ -213,47 +192,44 @@
         fetch(`${SCRIPT_URL}?acao=entrarSala&nome=${meuNome}&codigo=${salaAtual}&id=${meuID}`)
             .then(res => res.json())
             .then(data => {
+                if (data.erro) {
+                    alert(data.erro);
+                    return;
+                }
                 document.getElementById('lbl-codigo').innerText = salaAtual;
                 mostrarTela('tela-lobby');
                 iniciarPolling();
             });
     }
 
-    // Iniciar Partida (Líder)
     function iniciarPartida() {
-    let tema = document.getElementById('tema-escolhido').value;
-    
-    // 🌀 Mostra a bolinha rodando no botão ou na mensagem de espera
-    document.getElementById('loader-inicio').classList.remove('escondido');
+        let tema = document.getElementById('tema-escolhido').value;
+        document.getElementById('loader-inicio').classList.remove('escondido');
 
-    fetch(`${SCRIPT_URL}?acao=iniciarPartida&codigo=${salaAtual}&tema=${tema}`)
-        .then(res => res.json())
-        .then(data => {
-            // Esconde a bolinha se der erro (se iniciar com sucesso, a tela muda sozinha pelo polling)
-            if (data.erro) {
-                document.getElementById('loader-inicio').classList.add('escondido');
-                alert(data.erro);
-            }
-        });
+        fetch(`${SCRIPT_URL}?acao=iniciarPartida&codigo=${salaAtual}&tema=${tema}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.erro) {
+                    document.getElementById('loader-inicio').classList.add('escondido');
+                    alert(data.erro);
+                }
+            });
     }
 
-    // Ação de Votar: Ativa a trava, acelera o polling para 3s e força checagem imediata
     function votar(idAlvo) {
-    fetch(`${SCRIPT_URL}?acao=votar&codigo=${salaAtual}&id=${meuID}&votoEm=${idAlvo}`)
-        .then(res => res.json())
-        .then(() => {
-            jaVotei = true; // Trava o polling em 3s
-            ajustarVelocidadePolling(3000); 
+        fetch(`${SCRIPT_URL}?acao=votar&codigo=${salaAtual}&id=${meuID}&votoEm=${idAlvo}`)
+            .then(res => res.json())
+            .then(() => {
+                jaVotei = true; 
+                ajustarVelocidadePolling(3000); 
 
-            // 🎨 Efeito visual: Esconde a lista de votos e mostra o aviso de "Aguardando os outros"
-            document.getElementById('lista-votacao').classList.add('escondido');
-            document.getElementById('msg-esperando-votos').classList.remove('escondido');
+                document.getElementById('lista-votacao').classList.add('escondido');
+                document.getElementById('msg-esperando-votos').classList.remove('escondido');
 
-            atualizarTela(); // Força checagem imediata
-        });
+                atualizarTela(); 
+            });
     }
 
-    // Inicializa o Polling
     function iniciarPolling() {
         intervaloAtual = 3000;
         jaVotei = false;
@@ -261,7 +237,6 @@
         atualizarTela(); 
     }
 
-    // Atualização da Tela (Sincronização)
     function atualizarTela() {
         fetch(`${SCRIPT_URL}?acao=estadoSala&codigo=${salaAtual}`)
             .then(res => res.json())
@@ -282,38 +257,49 @@
                 if (document.getElementById('painel-lider-reiniciar')) {
                     document.getElementById('painel-lider-reiniciar').classList.add('escondido');
                     document.getElementById('painel-lider-revotar').classList.add('escondido');
-                    document.getElementById('msg-aguardando-lider').classList.remove('escondido');
                 }
 
                 // Lógica de telas e controle de tempo refinado
                 if (data.sala.status === "Aguardando") {
                     mostrarTela('tela-lobby');
-                    jaVotei = false; // Reseta a trava ao voltar para o lobby
+                    jaVotei = false; 
+                    document.getElementById('loader-inicio').classList.add('escondido');
                     ajustarVelocidadePolling(3000); 
                 }
                 else if (data.sala.status === "Jogando") {
                     mostrarTela('tela-jogo');
+                    
+                    // 🔄 SINCRONIZAÇÃO INTELIGENTE DO VOTO:
+                    // Verifica na lista de jogadores se o nosso voto na planilha está vazio
+                    let eu = data.jogadores.find(j => j.id === meuID);
+                    if (eu && (!eu.voto || eu.voto === "")) {
+                        jaVotei = false; // Se o servidor limpou o voto, libera a tela de votação!
+                        document.getElementById('lista-votacao').classList.remove('escondido');
+                        document.getElementById('msg-esperando-votos').classList.add('escondido');
+                    } else {
+                        jaVotei = true;
+                        document.getElementById('lista-votacao').classList.add('escondido');
+                        document.getElementById('msg-esperando-votos').classList.remove('escondido');
+                    }
+
                     desenharTelaJogo(data.jogadores);
                     
-                    // 🧠 O Pulo do Gato: Se você já votou, mantemos em 3s. Se não votou, dorme em 60s!
                     if (jaVotei) {
                         ajustarVelocidadePolling(3000); 
                     } else {
-                        ajustarVelocidadePolling(60000); // 💤 Dorme por 1 minuto poupando o Google
+                        ajustarVelocidadePolling(60000); 
                     }
                 } 
                 else if (data.sala.status.startsWith("Resultado") || data.sala.status.startsWith("Empate")) {
                     mostrarTela('tela-resultado');
-                    jaVotei = false; // Reseta a trava para a próxima rodada
-                    ajustarVelocidadePolling(3000); // Nos resultados: volta para 3 segundos para o líder reiniciar
+                    jaVotei = false; 
+                    ajustarVelocidadePolling(3000); 
                     
                     let tipoStatus = data.sala.status.split("|")[0]; 
                     let textoFinal = data.sala.status.split("|")[1]; 
                     document.getElementById('mensagem-resultado').innerText = textoFinal;
                     
                     if (data.sala.lider === meuID) {
-                        document.getElementById('msg-aguardando-lider').classList.add('escondido');
-                        
                         if (tipoStatus === "Empate") {
                             document.getElementById('painel-lider-revotar').classList.remove('escondido');
                         } else {
@@ -325,9 +311,8 @@
     }
 
     function reiniciarPartida() {
-    jaVotei = false;
-    // Opcional: mostrar um spinner no botão do líder se quiser
-    fetch(`${SCRIPT_URL}?acao=reiniciar&codigo=${salaAtual}`);
+        jaVotei = false;
+        fetch(`${SCRIPT_URL}?acao=reiniciar&codigo=${salaAtual}`);
     }
 
     function pedirNovaVotacao() {
